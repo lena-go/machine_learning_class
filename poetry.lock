@@ -741,6 +741,20 @@ files = [
 ]
 
 [[package]]
+name = "sklearn-som"
+version = "1.1.0"
+description = "A simple planar self organizing map"
+optional = false
+python-versions = "*"
+files = [
+    {file = "sklearn-som-1.1.0.tar.gz", hash = "sha256:9b8107f42dfbd68db0d1aa75dd2007be4e0136bf0af96da51513e295f76646d9"},
+    {file = "sklearn_som-1.1.0-py3-none-any.whl", hash = "sha256:92b774da67fe5fb73cf0697e93bda63923060c121ae0383c4ecce638d1385719"},
+]
+
+[package.dependencies]
+numpy = "*"
+
+[[package]]
 name = "threadpoolctl"
 version = "3.2.0"
 description = "threadpoolctl"
@@ -776,4 +790,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "cb6d8c3bd2fec81b36b24fcb922c0259459ccd38690905dc35cb84a667155771"
+content-hash = "5401dd9ae922f2002a51fdef644e0c968d330dbb447ce4b8da7aa74e573cb01d"
