@@ -91,11 +91,16 @@ class GeneticAlgorithm:
             mutation_rate: float,
             survivors_ratio: float,
             max_generations: int,
-            natural: bool = True,
     ) -> None:
         self.equation = equation
         self.population = [
-            tuple(randint(1, self.equation.upper_borders[i]) for i in range(equation.terms_count))
+            tuple(
+                randint(
+                    self.equation.answer_borders[0],
+                    self.equation.answer_borders[1]
+                )
+                for _ in range(equation.terms_count)
+            )
             for _ in range(3)
         ]
         self.mating = Mating()
@@ -137,7 +142,10 @@ class GeneticAlgorithm:
         new_critter = []
         for i in range(len(critter)):
             if i == mutation_site:
-                gene = randint(1, self.equation.upper_borders[i])
+                gene = randint(
+                    self.equation.answer_borders[0],
+                    self.equation.answer_borders[1]
+                )
             else:
                 gene = critter[i]
             new_critter.append(gene)
