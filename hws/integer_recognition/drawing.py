@@ -5,6 +5,8 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 from PIL import Image, ImageDraw, ImageOps
 
+from cnn import classify_number
+
 
 CIRCLE_RADIUS = 3
 ENTER_KEY = 13
@@ -29,7 +31,6 @@ class Desk:
         self.points = []
         self.labels = []
         self.num_classes = 0
-        self.run()
 
     def run(self):
         running = True
@@ -45,7 +46,8 @@ class Desk:
                         self.points = []
                     elif event.key == ENTER_KEY and self.points:
                         self.clusterize()
-                        self.make_pictures()
+                        images = self.make_images(show=False)
+                        print(classify_number(images))
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         is_pressed = True
@@ -69,7 +71,7 @@ class Desk:
         clustering = DBSCAN(eps=10, min_samples=4).fit(self.points)
         self.labels = clustering.labels_
 
-    def make_pictures(self):
+    def make_images(self, show: bool = False):
         classes = set(self.labels)
         self.num_classes = len(classes)
         if -1 in classes:
@@ -81,11 +83,13 @@ class Desk:
                 continue
             coordinates_by_class[label].append(self.points[i])
 
+        images = []
         for cls in coordinates_by_class:
-            self.make_picture(cls)
+            images.append(self.make_image(cls, show))
+        return images
 
     @staticmethod
-    def make_picture(coordinates: [(int, int)], show: bool = False):
+    def make_image(coordinates: [(int, int)], show: bool = False):
         coords_np = np.asarray(coordinates)
         mean = np.mean(coords_np, axis=0)
         delta = np.array((SCREENSIZE[0] / 2, SCREENSIZE[1] / 2)) - mean
@@ -138,12 +142,4 @@ class Desk:
         cropped.thumbnail((28, 28))
         if show:
             cropped.show()
-
-
-def run():
-    desk = Desk()
-    desk.run()
-
-
-if __name__ == '__main__':
-    run()
+        return cropped

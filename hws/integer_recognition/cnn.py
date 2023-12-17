@@ -1,4 +1,5 @@
 import os
+from math import ceil
 
 import torch
 import torch.nn as nn
@@ -7,9 +8,11 @@ from torch.utils.data import DataLoader
 
 import matplotlib.pyplot as plt
 
+from PIL import Image
+
 from helpers import timeit
 import hyper_parameters
-from data_prep import get_loaders
+from data_prep import get_loaders, prepare_image
 
 
 MODEL_PATH = 'cnn.pt'
@@ -102,8 +105,64 @@ def evaluate(
             print(f'Accuracy of {classes[i]}: {acc}%')
 
 
-def run(rewrite: bool = False):
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+def get_model(device: torch.device) -> ConvNet:
+    if not os.path.exists(MODEL_PATH):
+        make_model(do_eval=False, device=device)
+    model = ConvNet().to(device)
+    cnn_state_dict = torch.load(MODEL_PATH)
+    model.load_state_dict(cnn_state_dict)
+    return model
+
+
+def classify_number(images: [Image]) -> str:
+    print('Trying to recognize...')
+    print('Total symbols -', len(images))
+    device = get_device()
+    model = get_model(device)
+    model.eval()
+
+    classes = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, '-')
+    number_idx = []
+    read_up_to = hyper_parameters.BATCH_SIZE
+    num_passes = ceil(len(images) / hyper_parameters.BATCH_SIZE)
+
+    with torch.no_grad():
+        for i in range(num_passes):
+            batch = torch.zeros(
+                hyper_parameters.BATCH_SIZE, 3, 28, 28,
+                dtype=torch.float32,
+                device=device,
+            )
+            for j in range(hyper_parameters.BATCH_SIZE):
+                img_i = i*hyper_parameters.BATCH_SIZE + j
+                if img_i < len(images):
+                    batch[j] += prepare_image(
+                        images[img_i],
+                        device=device
+                    )
+                else:
+                    read_up_to = j
+                    break
+
+            outputs = model(batch)
+            _, predicted = torch.max(outputs, 1)
+            number_idx += predicted.tolist()[:read_up_to]
+
+    return idx_to_number(classes, number_idx)
+
+
+def idx_to_number(classes: tuple, number_idx: [int]) -> str:
+    number = []
+    for val in number_idx:
+        number.append(str(classes[val]))
+    return ''.join(number)
+
+
+def get_device() -> torch.device:
+    return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+def make_model(rewrite: bool = False, do_eval: bool = True, device: torch.device = None):
     print('Device is', device)
 
     classes = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'minus')
@@ -123,7 +182,13 @@ def run(rewrite: bool = False):
         )
         train(model, train_loader, device, criterion, optimizer)
         plt.show()
-    evaluate(model, test_loader, device, classes)
+    if do_eval:
+        evaluate(model, test_loader, device, classes)
+
+
+def run():
+    device = get_device()
+    make_model(device=device)
 
 
 if __name__ == '__main__':
