@@ -23,7 +23,7 @@ class ConvNet(nn.Module):
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 4 * 4, 120)  # refer to cnn_test.py
         self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.fc3 = nn.Linear(84, hyper_parameters.NUM_CLASSES)
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
@@ -72,13 +72,13 @@ def evaluate(
         model: ConvNet,
         test_loader: DataLoader,
         device: torch.device,
-        classes: (int,),
+        classes: tuple,
 ):
     with torch.no_grad():
         n_correct = 0
         n_samples = 0
-        n_class_correct = [0 for _ in range(10)]
-        n_class_samples = [0 for _ in range(10)]
+        n_class_correct = [0 for _ in range(hyper_parameters.NUM_CLASSES)]
+        n_class_samples = [0 for _ in range(hyper_parameters.NUM_CLASSES)]
         for images, labels in test_loader:
             images = images.to(device)
             labels = labels.to(device)
@@ -95,18 +95,18 @@ def evaluate(
                 n_class_samples[label] += 1
 
         total_acc = 100.0 * n_correct / n_samples
-        print(f'Accuracy of the network: {total_acc} %')
+        print(f'Accuracy of the network: {total_acc}%')
 
-        for i in range(10):
+        for i in range(hyper_parameters.NUM_CLASSES):
             acc = 100.0 * n_class_correct[i] / n_class_samples[i]
-            print(f'Accuracy of {classes[i]}: {acc} %')
+            print(f'Accuracy of {classes[i]}: {acc}%')
 
 
 def run(rewrite: bool = False):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('Device is', device)
 
-    classes = tuple(range(0, 10))
+    classes = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'minus')
 
     train_loader, test_loader = get_loaders()
     model = ConvNet().to(device)
@@ -115,6 +115,7 @@ def run(rewrite: bool = False):
         cnn_state_dict = torch.load(MODEL_PATH)
         model.load_state_dict(cnn_state_dict)
     else:
+        print('Starting training...')
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(
             model.parameters(),
