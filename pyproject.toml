@@ -17,6 +17,8 @@ sklearn-som = "^1.1.0"
 torch = "^2.1.1"
 torchvision = "^0.16.1"
 pillow = "^10.1.0"
+opencv-python = "^4.8.1.78"
+face-recognition = "^1.3.0"
 
 
 [build-system]
